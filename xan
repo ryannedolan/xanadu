@@ -1,0 +1,2 @@
+#!/bin/bash
+./xanadu-cli/build/install/xanadu-cli/bin/xanadu-cli

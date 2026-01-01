@@ -1,0 +1,5 @@
+Makefile
+.xanrc
+*/build/*
+.gradle-home
+.gradle
