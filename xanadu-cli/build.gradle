@@ -1,0 +1,23 @@
+plugins {
+  id 'application'
+  id 'java-test-fixtures'
+}
+
+dependencies {
+  implementation project(':xanadu-core')
+  implementation 'org.jline:jline:3.25.1'
+  runtimeOnly 'com.h2database:h2:2.2.224'
+  runtimeOnly project(':xanadu-jdbc')
+  runtimeOnly project(':xanadu-gemini')
+  runtimeOnly project(':xanadu-chatgpt')
+  runtimeOnly project(':xanadu-claude')
+}
+
+test {
+  useJUnitPlatform()
+}
+
+application {
+  // Launch SQLLine as the CLI entrypoint
+  mainClass = 'codes.ry.xanadu.Main'
+}

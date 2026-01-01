@@ -1,0 +1,12 @@
+plugins {
+  id 'java'
+}
+
+dependencies {
+  implementation project(':xanadu-core')
+  implementation 'com.google.genai:google-genai:1.32.0'
+}
+
+test {
+  useJUnitPlatform()
+}

@@ -1,0 +1,16 @@
+
+rootProject.name='xanadu'
+
+include 'xanadu-core'
+include 'xanadu-cli'
+include 'xanadu-jdbc'
+include 'xanadu-gemini'
+include 'xanadu-chatgpt'
+include 'xanadu-claude'
+
+dependencyResolutionManagement {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+}

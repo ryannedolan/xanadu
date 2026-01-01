@@ -1,0 +1,12 @@
+plugins {
+  id 'java'
+}
+
+dependencies {
+  implementation project(':xanadu-core')
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
+}
+
+test {
+  useJUnitPlatform()
+}

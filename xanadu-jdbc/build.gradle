@@ -1,0 +1,13 @@
+plugins {
+  id 'java'
+}
+
+dependencies {
+  implementation project(':xanadu-core')
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+  testImplementation 'com.h2database:h2:2.2.224'
+}
+
+test {
+  useJUnitPlatform()
+}
