@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
   implementation project(':xanadu-core')
-  implementation 'com.theokanning.openai-gpt3-java:service:0.18.2'
+  implementation 'com.openai:openai-java:4.13.0'
 }
 
 test {

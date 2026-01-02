@@ -1,54 +1,62 @@
 package codes.ry.xanadu.chatgpt;
 
-import com.theokanning.openai.completion.chat.ChatCompletionRequest;
-import com.theokanning.openai.completion.chat.ChatCompletionResult;
-import com.theokanning.openai.completion.chat.ChatCompletionChoice;
-import com.theokanning.openai.completion.chat.ChatMessage;
-import com.theokanning.openai.model.Model;
-import com.theokanning.openai.service.OpenAiService;
-import java.time.Duration;
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.chat.completions.ChatCompletion;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
+import com.openai.models.chat.completions.ChatCompletionMessageParam;
+import com.openai.models.models.Model;
+import com.openai.models.models.ModelListPage;
 import java.util.ArrayList;
 import java.util.List;
 
 final class ChatGptClient {
-  private final OpenAiService service;
+  private final OpenAIClient client;
   private final String model;
 
   ChatGptClient(String apiKey, String model) {
-    this.service = new OpenAiService(apiKey, Duration.ofSeconds(60));
+    this.client = OpenAIOkHttpClient.builder().apiKey(apiKey).build();
     this.model = model;
   }
 
-  ChatResult chat(List<ChatMessage> messages) {
-    ChatCompletionRequest request =
-        ChatCompletionRequest.builder()
-            .model(model)
-            .messages(messages)
-            .build();
-    ChatCompletionResult result = service.createChatCompletion(request);
-    if (result.getChoices() == null || result.getChoices().isEmpty()) {
+  ChatResult chat(List<ChatCompletionMessageParam> messages) {
+    try {
+      ChatCompletionCreateParams request =
+          ChatCompletionCreateParams.builder()
+              .model(model)
+              .messages(messages)
+              .build();
+      ChatCompletion result = client.chat().completions().create(request);
+      if (result.choices() == null || result.choices().isEmpty()) {
+        return new ChatResult(null, null);
+      }
+      ChatCompletion.Choice choice = result.choices().get(0);
+      String content = choice.message().content().orElse(null);
+      String finishReason = choice.finishReason().asString();
+      return new ChatResult(content, finishReason);
+    } catch (Exception e) {
       return new ChatResult(null, null);
     }
-    ChatCompletionChoice choice = result.getChoices().get(0);
-    ChatMessage message = choice.getMessage();
-    String content = message == null ? null : message.getContent();
-    return new ChatResult(content, choice.getFinishReason());
   }
 
   List<String> listModels() {
-    List<Model> models = service.listModels();
-    List<String> names = new ArrayList<>();
-    for (Model model : models) {
-      String id = model.getId();
-      if (id == null || id.isBlank()) {
-        continue;
+    try {
+      ModelListPage page = client.models().list();
+      List<String> names = new ArrayList<>();
+      for (Model model : page.data()) {
+        String id = model.id();
+        if (id == null || id.isBlank()) {
+          continue;
+        }
+        if (isChatCapable(id)) {
+          names.add(id);
+        }
       }
-      if (isChatCapable(id)) {
-        names.add(id);
-      }
+      names.sort(String::compareToIgnoreCase);
+      return names;
+    } catch (Exception e) {
+      return List.of();
     }
-    names.sort(String::compareToIgnoreCase);
-    return names;
   }
 
   private static boolean isChatCapable(String id) {
