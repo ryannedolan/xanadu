@@ -3,7 +3,7 @@ subprojects {
     afterEvaluate {
         tasks.withType(Test).configureEach {
             testLogging {
-                // Show test events
+                // Show test events including standard output and error streams
                 events "passed", "skipped", "failed", "standardOut", "standardError"
                 
                 // Show exceptions in full detail
@@ -11,9 +11,6 @@ subprojects {
                 showExceptions true
                 showCauses true
                 showStackTraces true
-                
-                // Show standard output and error streams
-                showStandardStreams = true
             }
         }
     }
