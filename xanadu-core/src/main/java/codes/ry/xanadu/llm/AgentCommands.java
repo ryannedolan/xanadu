@@ -349,11 +349,15 @@ public final class AgentCommands implements CommandProvider {
     sb.append(" To run commands, reply with a fenced block: ```");
     sb.append(CommandTooling.TOOL_NAME);
     sb.append("\\n<command line>\\n```.");
+    sb.append(" For examples or samples, always use ```text fences, not ```");
+    sb.append(CommandTooling.TOOL_NAME);
+    sb.append(" (that fence will execute).");
     sb.append(" For SQL commands, the command name is the verb; do not repeat it.");
     sb.append(" Example: `select * from users` (not `select SELECT * from users`).");
     sb.append(" End SQL statements with a semicolon.");
     sb.append(" To delegate a task, use: ```" + CommandTooling.TOOL_NAME + "\\nagent delegate <prompt>\\n```.");
     sb.append(" Delegated agents start fresh and cannot use continuation.");
+    sb.append(" Never use `chat` or `agent chat` commands; agents do not reply to users via chat commands.");
     sb.append(" Use one command per line inside the fenced block.");
     sb.append(" If a command needs continuation (e.g., multi-line SQL), put the next line(s) immediately after it.");
     sb.append(" You can define macros with `def <name> ... end`, list them with `macros`, and delete them with `undef <name>`.");
