@@ -5,9 +5,11 @@ import io.github.sashirestela.openai.domain.chat.Chat;
 import io.github.sashirestela.openai.domain.chat.ChatMessage;
 import io.github.sashirestela.openai.domain.chat.ChatRequest;
 import io.github.sashirestela.openai.domain.model.Model;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 final class ChatGptClient {
   private final SimpleOpenAI client;
@@ -26,7 +28,7 @@ final class ChatGptClient {
             .build();
     try {
       CompletableFuture<Chat> future = client.chatCompletions().create(request);
-      Chat result = future.join();
+      Chat result = future.get(60, TimeUnit.SECONDS);
       if (result.getChoices() == null || result.getChoices().isEmpty()) {
         return new ChatResult(null, null);
       }
@@ -42,7 +44,7 @@ final class ChatGptClient {
   List<String> listModels() {
     try {
       CompletableFuture<List<Model>> future = client.models().getList();
-      List<Model> models = future.join();
+      List<Model> models = future.get(30, TimeUnit.SECONDS);
       List<String> names = new ArrayList<>();
       for (Model model : models) {
         String id = model.getId();
