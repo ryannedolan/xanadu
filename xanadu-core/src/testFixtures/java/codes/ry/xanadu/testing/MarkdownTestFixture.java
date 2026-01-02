@@ -56,29 +56,33 @@ public abstract class MarkdownTestFixture {
   private List<TestBlock> parseMarkdownFile(String resourcePath) {
     List<TestBlock> blocks = new ArrayList<>();
     
-    try (InputStream in = getClass().getResourceAsStream(resourcePath);
-         BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+    try (InputStream in = getClass().getResourceAsStream(resourcePath)) {
+      if (in == null) {
+        throw new RuntimeException("Resource not found: " + resourcePath);
+      }
       
-      String line;
-      int lineNum = 0;
-      boolean inFence = false;
-      int blockStartLine = 0;
-      List<String> currentBlock = new ArrayList<>();
-      
-      while ((line = reader.readLine()) != null) {
-        lineNum++;
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+        String line;
+        int lineNum = 0;
+        boolean inFence = false;
+        int blockStartLine = 0;
+        List<String> currentBlock = new ArrayList<>();
         
-        if (!inFence && FENCE_START.matcher(line).matches()) {
-          inFence = true;
-          blockStartLine = lineNum;
-          currentBlock.clear();
-        } else if (inFence && FENCE_END.matcher(line).matches()) {
-          inFence = false;
-          if (!currentBlock.isEmpty()) {
-            blocks.add(new TestBlock(blockStartLine, currentBlock));
+        while ((line = reader.readLine()) != null) {
+          lineNum++;
+          
+          if (!inFence && FENCE_START.matcher(line).matches()) {
+            inFence = true;
+            blockStartLine = lineNum;
+            currentBlock.clear();
+          } else if (inFence && FENCE_END.matcher(line).matches()) {
+            inFence = false;
+            if (!currentBlock.isEmpty()) {
+              blocks.add(new TestBlock(blockStartLine, currentBlock));
+            }
+          } else if (inFence) {
+            currentBlock.add(line);
           }
-        } else if (inFence) {
-          currentBlock.add(line);
         }
       }
     } catch (IOException e) {
@@ -168,11 +172,12 @@ public abstract class MarkdownTestFixture {
 
   private void validateOutput(String actual, String expected, String command) {
     if (expected.contains(ELLIPSIS)) {
-      // Wildcard matching - check if expected parts are present
-      String[] parts = expected.split(Pattern.quote(ELLIPSIS));
+      // Wildcard matching - check if expected parts are present in order
+      String[] parts = expected.split(Pattern.quote(ELLIPSIS), -1);
       int lastIndex = 0;
       
-      for (String part : parts) {
+      for (int i = 0; i < parts.length; i++) {
+        String part = parts[i];
         if (!part.isEmpty()) {
           int index = actual.indexOf(part, lastIndex);
           if (index < 0) {
