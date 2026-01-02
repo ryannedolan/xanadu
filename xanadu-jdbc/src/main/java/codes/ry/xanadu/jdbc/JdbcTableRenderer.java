@@ -3,6 +3,7 @@ package codes.ry.xanadu.jdbc;
 import codes.ry.xanadu.Frame;
 import codes.ry.xanadu.Image;
 import codes.ry.xanadu.Rect;
+import codes.ry.xanadu.StyledImage;
 import codes.ry.xanadu.TextStyle;
 import codes.ry.xanadu.StyledImages;
 import codes.ry.xanadu.command.CommandContext;
@@ -59,7 +60,7 @@ final class JdbcTableRenderer {
     List<Image[]> rendered = renderRows(rows);
     int[] computed = computeWidths(names, rendered, rows);
     Frame headerBase = rowFrame(names, computed, true);
-    Frame headerRow = headerBase.withImage(StyledImages.withStyle(headerBase.image, TextStyle.BOLD));
+    Frame headerRow = headerBase;
     Frame table = headerRow;
     for (int i = 0; i < rows.size(); i++) {
       Frame rowFrame = rowFrame(rendered.get(i), rows.get(i), computed);
@@ -106,6 +107,9 @@ final class JdbcTableRenderer {
       Align align = header ? Align.CENTER : Align.LEFT;
       String padded = alignText(value, widths[i], align);
       Image limited = Image.text(padded);
+      if (header) {
+        limited = StyledImages.withStyle(limited, TextStyle.BOLD);
+      }
       Frame cellFrame = context.style.frame(1, widths[i], limited).border();
       combined = combined == null ? cellFrame : combined.append(cellFrame);
     }
@@ -155,30 +159,67 @@ final class JdbcTableRenderer {
     int separatorRow = headerRow.height;
     int minJ = table.drawRect.left;
     int maxJ = table.drawRect.right;
-    Image separator =
-        (i, j) -> {
-          if (i != separatorRow || j < minJ || j >= maxJ) {
-            return ' ';
+    Image separator = new StyledImage() {
+      @Override
+      public char at(int i, int j) {
+        if (i != separatorRow || j < minJ || j >= maxJ) {
+          return ' ';
+        }
+        char border = headerRow.image.at(separatorRow, j);
+        if (isBoundary(border)) {
+          return '╪';
+        }
+        return '═';
+      }
+      
+      @Override
+      public TextStyle styleAt(int i, int j) {
+        char c = at(i, j);
+        if (c == ' ') {
+          // Preserve underlying style for spaces
+          if (table.image instanceof StyledImage) {
+            return ((StyledImage) table.image).styleAt(i, j);
           }
-          char border = headerRow.image.at(separatorRow, j);
-          if (isBoundary(border)) {
-            return '╪';
-          }
-          return '═';
-        };
+          return TextStyle.NORMAL;
+        }
+        // Separator characters are always NORMAL style
+        return TextStyle.NORMAL;
+      }
+    };
     Image combined = StyledImages.overlay(table.image, separator);
     return table.withImage(combined);
   }
 
   private Frame addBottomBorder(Frame table, Frame headerRow) {
     int bottomRow = table.drawRect.bottom;
-    Image combined =
-        (i, j) -> {
+    Image combined;
+    if (table.image instanceof StyledImage) {
+      StyledImage styledTable = (StyledImage) table.image;
+      combined = new StyledImage() {
+        @Override
+        public char at(int i, int j) {
           if (i == bottomRow) {
             return headerRow.image.at(headerRow.height, j);
           }
           return table.image.at(i, j);
-        };
+        }
+        
+        @Override
+        public TextStyle styleAt(int i, int j) {
+          if (i == bottomRow) {
+            return TextStyle.NORMAL;
+          }
+          return styledTable.styleAt(i, j);
+        }
+      };
+    } else {
+      combined = (i, j) -> {
+        if (i == bottomRow) {
+          return headerRow.image.at(headerRow.height, j);
+        }
+        return table.image.at(i, j);
+      };
+    }
     Rect expanded =
         new Rect(table.drawRect.top, table.drawRect.left, table.drawRect.height + 1, table.drawRect.width);
     return table.withImage(combined).withDrawRect(expanded);
