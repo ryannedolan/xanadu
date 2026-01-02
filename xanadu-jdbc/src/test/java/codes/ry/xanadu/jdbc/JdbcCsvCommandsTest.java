@@ -38,6 +38,7 @@ class JdbcCsvCommandsTest {
     context =
         new CommandContext(
             writer, Style.box(), RenderService.defaults(), new CommandService(List.of()), 80, 24);
+    context.setAllowContinuation(false);  // Disable continuation mode for tests
     
     // Setup H2 connection with unique database name for each test
     connection = DriverManager.getConnection("jdbc:h2:mem:test" + System.nanoTime(), "sa", "");
