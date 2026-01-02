@@ -4,7 +4,7 @@ import codes.ry.xanadu.llm.AgentBackend;
 import codes.ry.xanadu.llm.AgentFinishReason;
 import codes.ry.xanadu.llm.AgentMessage;
 import codes.ry.xanadu.llm.AgentResponse;
-import com.theokanning.openai.completion.chat.ChatMessage;
+import io.github.sashirestela.openai.domain.chat.ChatMessage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +51,10 @@ public final class ChatGptAgentBackend implements AgentBackend {
     ChatGptClient client = new ChatGptClient(apiKey, model);
     List<ChatMessage> chatMessages = new ArrayList<>();
     for (AgentMessage message : messages) {
-      chatMessages.add(new ChatMessage(message.role(), message.content()));
+      ChatMessage chatMessage = convertMessage(message);
+      if (chatMessage != null) {
+        chatMessages.add(chatMessage);
+      }
     }
     ChatGptClient.ChatResult result = client.chat(chatMessages);
     if (result == null) {
@@ -59,6 +62,23 @@ public final class ChatGptAgentBackend implements AgentBackend {
     }
     AgentFinishReason finishReason = mapFinishReason(result.finishReason);
     return AgentResponse.of(result.content, finishReason);
+  }
+
+  private ChatMessage convertMessage(AgentMessage message) {
+    String role = message.role();
+    String content = message.content();
+    if (content == null || content.isBlank()) {
+      return null;
+    }
+    if ("user".equalsIgnoreCase(role)) {
+      return ChatMessage.UserMessage.of(content);
+    } else if ("system".equalsIgnoreCase(role)) {
+      return ChatMessage.SystemMessage.of(content);
+    } else if ("assistant".equalsIgnoreCase(role)) {
+      return ChatMessage.AssistantMessage.of(content);
+    }
+    // Default to user message for unknown roles
+    return ChatMessage.UserMessage.of(content);
   }
 
   private AgentFinishReason mapFinishReason(String reason) {
