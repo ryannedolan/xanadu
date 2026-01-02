@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import codes.ry.xanadu.Style;
+import codes.ry.xanadu.command.Command;
 import codes.ry.xanadu.command.CommandContext;
 import codes.ry.xanadu.command.CommandInput;
 import codes.ry.xanadu.command.CommandResult;
@@ -51,7 +52,7 @@ class VizCommandsTest {
   @Test
   void barCreatesVerticalBarChart() throws Exception {
     CommandInput input = new CommandInput("bar 10 20 30", "bar", List.of("10", "20", "30"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -63,7 +64,7 @@ class VizCommandsTest {
   @Test
   void barWithSingleValue() throws Exception {
     CommandInput input = new CommandInput("bar 50", "bar", List.of("50"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -74,7 +75,7 @@ class VizCommandsTest {
   @Test
   void barWithZeroValues() throws Exception {
     CommandInput input = new CommandInput("bar 0 0 0", "bar", List.of("0", "0", "0"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -83,7 +84,7 @@ class VizCommandsTest {
   @Test
   void barWithNoValuesShowsError() throws Exception {
     CommandInput input = new CommandInput("bar", "bar", List.of());
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -94,7 +95,7 @@ class VizCommandsTest {
   @Test
   void barWithInvalidNumberShowsError() throws Exception {
     CommandInput input = new CommandInput("bar 10 abc 30", "bar", List.of("10", "abc", "30"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -105,7 +106,7 @@ class VizCommandsTest {
   @Test
   void hbarCreatesHorizontalBarChart() throws Exception {
     CommandInput input = new CommandInput("hbar 10 20 30", "hbar", List.of("10", "20", "30"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -117,7 +118,7 @@ class VizCommandsTest {
   @Test
   void hbarWithFloatingPointValues() throws Exception {
     CommandInput input = new CommandInput("hbar 10.5 20.3 30.7", "hbar", List.of("10.5", "20.3", "30.7"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -126,7 +127,7 @@ class VizCommandsTest {
   @Test
   void sparkCreatesSparkline() throws Exception {
     CommandInput input = new CommandInput("spark 1 2 4 8 16", "spark", List.of("1", "2", "4", "8", "16"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -140,7 +141,7 @@ class VizCommandsTest {
   @Test
   void sparkWithSingleValue() throws Exception {
     CommandInput input = new CommandInput("spark 100", "spark", List.of("100"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -149,7 +150,7 @@ class VizCommandsTest {
   @Test
   void sparkWithNegativeValue() throws Exception {
     CommandInput input = new CommandInput("spark -5 10 20", "spark", List.of("-5", "10", "20"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);

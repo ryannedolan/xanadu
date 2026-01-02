@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import codes.ry.xanadu.Style;
+import codes.ry.xanadu.command.Command;
 import codes.ry.xanadu.command.CommandContext;
 import codes.ry.xanadu.command.CommandInput;
 import codes.ry.xanadu.command.CommandResult;
@@ -61,7 +62,7 @@ class JdbcCsvCommandsTest {
   @Test
   void loadCommandWithNoArgsShowsUsage() throws Exception {
     CommandInput input = new CommandInput("load", "load", List.of());
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -71,7 +72,7 @@ class JdbcCsvCommandsTest {
   @Test
   void extractCommandWithNoArgsShowsUsage() throws Exception {
     CommandInput input = new CommandInput("extract", "extract", List.of());
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -83,7 +84,7 @@ class JdbcCsvCommandsTest {
     Path csvPath = tempDir.resolve("nonexistent.csv");
     String raw = "load test_table " + csvPath;
     CommandInput input = new CommandInput(raw, "load", List.of("test_table", csvPath.toString()));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -98,7 +99,7 @@ class JdbcCsvCommandsTest {
     
     String raw = "load test_table " + csvPath + " --header";
     CommandInput input = new CommandInput(raw, "load", List.of("test_table", csvPath.toString(), "--header"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -118,7 +119,7 @@ class JdbcCsvCommandsTest {
     
     String raw = "load test_table " + csvPath;
     CommandInput input = new CommandInput(raw, "load", List.of("test_table", csvPath.toString()));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -133,7 +134,7 @@ class JdbcCsvCommandsTest {
     
     String raw = "load test_table " + csvPath + " --header --delimiter=\\t";
     CommandInput input = new CommandInput(raw, "load", List.of("test_table", csvPath.toString(), "--header", "--delimiter=\t"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -148,7 +149,7 @@ class JdbcCsvCommandsTest {
     Path csvPath = tempDir.resolve("output.csv");
     String raw = "extract test_table " + csvPath + " --header";
     CommandInput input = new CommandInput(raw, "extract", List.of("test_table", csvPath.toString(), "--header"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -170,7 +171,7 @@ class JdbcCsvCommandsTest {
     String raw = "extract " + csvPath + " --header select * from test_table where id = 1";
     CommandInput input = new CommandInput(raw, "extract", 
         List.of(csvPath.toString(), "--header", "select", "*", "from", "test_table", "where", "id", "=", "1"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -194,7 +195,7 @@ class JdbcCsvCommandsTest {
     Path csvPath = tempDir.resolve("output.csv");
     String raw = "extract test_table " + csvPath;
     CommandInput input = new CommandInput(raw, "extract", List.of("test_table", csvPath.toString()));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(noConnContext);
     noConnContext.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -216,7 +217,7 @@ class JdbcCsvCommandsTest {
     
     String raw = "load test_table " + csvPath;
     CommandInput input = new CommandInput(raw, "load", List.of("test_table", csvPath.toString()));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(noConnContext);
     noConnContext.out.flush();
     assertEquals(CommandResult.SUCCESS, result);

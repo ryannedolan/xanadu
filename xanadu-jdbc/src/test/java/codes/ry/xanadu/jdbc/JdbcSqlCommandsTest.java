@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import codes.ry.xanadu.Style;
+import codes.ry.xanadu.command.Command;
 import codes.ry.xanadu.command.CommandContext;
 import codes.ry.xanadu.command.CommandInput;
 import codes.ry.xanadu.command.CommandResult;
@@ -95,7 +96,7 @@ class JdbcSqlCommandsTest {
   @Test
   void createTableExecutesSuccessfully() throws Exception {
     CommandInput input = new CommandInput("create table users (id int)", "create", List.of("table", "users", "(id", "int)"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -108,7 +109,7 @@ class JdbcSqlCommandsTest {
     connection.createStatement().execute("CREATE TABLE test_table (id INT, name VARCHAR(50))");
     
     CommandInput input = new CommandInput("insert into test_table values (1, 'Alice')", "insert", List.of("into", "test_table", "values", "(1,", "'Alice')"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -122,7 +123,7 @@ class JdbcSqlCommandsTest {
     connection.createStatement().execute("INSERT INTO test_table VALUES (1, 'Alice'), (2, 'Bob')");
     
     CommandInput input = new CommandInput("select * from test_table", "select", List.of("*", "from", "test_table"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -138,7 +139,7 @@ class JdbcSqlCommandsTest {
     connection.createStatement().execute("INSERT INTO test_table VALUES (1, 'Alice')");
     
     CommandInput input = new CommandInput("update test_table set name = 'Bob' where id = 1", "update", List.of("test_table", "set", "name", "=", "'Bob'", "where", "id", "=", "1"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -152,7 +153,7 @@ class JdbcSqlCommandsTest {
     connection.createStatement().execute("INSERT INTO test_table VALUES (1, 'Alice')");
     
     CommandInput input = new CommandInput("delete from test_table where id = 1", "delete", List.of("from", "test_table", "where", "id", "=", "1"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -165,7 +166,7 @@ class JdbcSqlCommandsTest {
     connection.createStatement().execute("INSERT INTO test_table VALUES (1)");
     
     CommandInput input = new CommandInput("sql select * from test_table", "sql", List.of("select", "*", "from", "test_table"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -174,7 +175,7 @@ class JdbcSqlCommandsTest {
   @Test
   void ddlCommandExecutesUpdate() throws Exception {
     CommandInput input = new CommandInput("ddl create table ddl_test (id int)", "ddl", List.of("create", "table", "ddl_test", "(id", "int)"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -193,7 +194,7 @@ class JdbcSqlCommandsTest {
         24);
     
     CommandInput input = new CommandInput("select 1", "select", List.of("1"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(noConnContext);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -203,7 +204,7 @@ class JdbcSqlCommandsTest {
   @Test
   void invalidSqlThrowsException() throws Exception {
     CommandInput input = new CommandInput("select invalid_syntax", "select", List.of("invalid_syntax"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     
     assertThrows(RuntimeException.class, () -> {
       command.execute(context);

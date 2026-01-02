@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import codes.ry.xanadu.Style;
+import codes.ry.xanadu.command.Command;
 import codes.ry.xanadu.command.CommandContext;
 import codes.ry.xanadu.command.CommandInput;
 import codes.ry.xanadu.command.CommandResult;
@@ -40,7 +41,7 @@ class DrawCommandsTest {
   @Test
   void drawPointAddsPoint() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("point", "5", "10"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -48,7 +49,7 @@ class DrawCommandsTest {
   @Test
   void drawPointWithInvalidArguments() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("point", "abc"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -58,7 +59,7 @@ class DrawCommandsTest {
   @Test
   void drawLineAddsLine() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("line", "0", "0", "5", "5"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -66,7 +67,7 @@ class DrawCommandsTest {
   @Test
   void drawLineWithInsufficientArguments() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("line", "0", "0"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -76,7 +77,7 @@ class DrawCommandsTest {
   @Test
   void drawRectAddsRectangle() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("rect", "0", "0", "5", "10"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -84,7 +85,7 @@ class DrawCommandsTest {
   @Test
   void drawRectWithZeroHeightOrWidth() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("rect", "0", "0", "0", "10"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -94,7 +95,7 @@ class DrawCommandsTest {
   @Test
   void drawTextAddsText() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("text", "2", "3", "Hello", "World"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -102,7 +103,7 @@ class DrawCommandsTest {
   @Test
   void drawTextWithInsufficientArguments() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("text", "2"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -112,7 +113,7 @@ class DrawCommandsTest {
   @Test
   void drawShowRendersBuffer() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("show", "10", "20"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -122,7 +123,7 @@ class DrawCommandsTest {
   @Test
   void drawShowWithInvalidDimensions() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("show", "0", "20"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -137,7 +138,7 @@ class DrawCommandsTest {
     
     // Then clear
     CommandInput clearInput = new CommandInput("draw", "draw", List.of("clear"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(clearInput);
+    Command command = commands.commandFor(clearInput);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -145,7 +146,7 @@ class DrawCommandsTest {
   @Test
   void turtlePenUp() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("pen", "up"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -153,7 +154,7 @@ class DrawCommandsTest {
   @Test
   void turtlePenDown() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("pen", "down"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -161,7 +162,7 @@ class DrawCommandsTest {
   @Test
   void turtlePenWithInvalidArgument() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("pen", "invalid"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -171,7 +172,7 @@ class DrawCommandsTest {
   @Test
   void turtleMoveUpdatesPosition() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("move", "10", "20"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -179,7 +180,7 @@ class DrawCommandsTest {
   @Test
   void turtleForwardMovesInDirection() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("forward", "10"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -187,7 +188,7 @@ class DrawCommandsTest {
   @Test
   void turtleLeftTurnsLeft() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("left", "90"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -195,7 +196,7 @@ class DrawCommandsTest {
   @Test
   void turtleRightTurnsRight() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("right", "45"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -203,7 +204,7 @@ class DrawCommandsTest {
   @Test
   void turtleHeadingSetsHeading() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("heading", "180"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -215,7 +216,7 @@ class DrawCommandsTest {
     
     // Then home
     CommandInput input = new CommandInput("draw", "draw", List.of("home"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     assertEquals(CommandResult.SUCCESS, result);
   }
@@ -223,7 +224,7 @@ class DrawCommandsTest {
   @Test
   void drawWithNoArgumentsShowsUsage() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of());
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
@@ -233,7 +234,7 @@ class DrawCommandsTest {
   @Test
   void drawWithUnknownSubcommandShowsWarning() throws Exception {
     CommandInput input = new CommandInput("draw", "draw", List.of("unknown"));
-    codes.ry.xanadu.command.Command command = commands.commandFor(input);
+    Command command = commands.commandFor(input);
     CommandResult result = command.execute(context);
     context.out.flush();
     assertEquals(CommandResult.SUCCESS, result);
