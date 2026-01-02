@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
   implementation project(':xanadu-core')
-  implementation 'io.github.sashirestela:simple-openai:3.21.0'
+  implementation 'com.openai:openai-java:4.13.0'
 }
 
 test {

@@ -4,7 +4,10 @@ import codes.ry.xanadu.llm.AgentBackend;
 import codes.ry.xanadu.llm.AgentFinishReason;
 import codes.ry.xanadu.llm.AgentMessage;
 import codes.ry.xanadu.llm.AgentResponse;
-import io.github.sashirestela.openai.domain.chat.ChatMessage;
+import com.openai.models.chat.completions.ChatCompletionAssistantMessageParam;
+import com.openai.models.chat.completions.ChatCompletionMessageParam;
+import com.openai.models.chat.completions.ChatCompletionSystemMessageParam;
+import com.openai.models.chat.completions.ChatCompletionUserMessageParam;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,9 +52,9 @@ public final class ChatGptAgentBackend implements AgentBackend {
       return null;
     }
     ChatGptClient client = new ChatGptClient(apiKey, model);
-    List<ChatMessage> chatMessages = new ArrayList<>();
+    List<ChatCompletionMessageParam> chatMessages = new ArrayList<>();
     for (AgentMessage message : messages) {
-      ChatMessage chatMessage = convertMessage(message);
+      ChatCompletionMessageParam chatMessage = convertMessage(message);
       if (chatMessage != null) {
         chatMessages.add(chatMessage);
       }
@@ -64,21 +67,25 @@ public final class ChatGptAgentBackend implements AgentBackend {
     return AgentResponse.of(result.content, finishReason);
   }
 
-  private ChatMessage convertMessage(AgentMessage message) {
+  private ChatCompletionMessageParam convertMessage(AgentMessage message) {
     String role = message.role();
     String content = message.content();
     if (content == null || content.isBlank()) {
       return null;
     }
     if ("user".equalsIgnoreCase(role)) {
-      return ChatMessage.UserMessage.of(content);
+      return ChatCompletionMessageParam.ofUser(
+          ChatCompletionUserMessageParam.builder().content(content).build());
     } else if ("system".equalsIgnoreCase(role)) {
-      return ChatMessage.SystemMessage.of(content);
+      return ChatCompletionMessageParam.ofSystem(
+          ChatCompletionSystemMessageParam.builder().content(content).build());
     } else if ("assistant".equalsIgnoreCase(role)) {
-      return ChatMessage.AssistantMessage.of(content);
+      return ChatCompletionMessageParam.ofAssistant(
+          ChatCompletionAssistantMessageParam.builder().content(content).build());
     }
     // Default to user message for unknown roles
-    return ChatMessage.UserMessage.of(content);
+    return ChatCompletionMessageParam.ofUser(
+        ChatCompletionUserMessageParam.builder().content(content).build());
   }
 
   private AgentFinishReason mapFinishReason(String reason) {

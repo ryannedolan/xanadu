@@ -1,40 +1,39 @@
 package codes.ry.xanadu.chatgpt;
 
-import io.github.sashirestela.openai.SimpleOpenAI;
-import io.github.sashirestela.openai.domain.chat.Chat;
-import io.github.sashirestela.openai.domain.chat.ChatMessage;
-import io.github.sashirestela.openai.domain.chat.ChatRequest;
-import io.github.sashirestela.openai.domain.model.Model;
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.chat.completions.ChatCompletion;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
+import com.openai.models.chat.completions.ChatCompletionMessageParam;
+import com.openai.models.models.Model;
+import com.openai.models.models.ModelListPage;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 final class ChatGptClient {
-  private final SimpleOpenAI client;
+  private final OpenAIClient client;
   private final String model;
 
   ChatGptClient(String apiKey, String model) {
-    this.client = SimpleOpenAI.builder().apiKey(apiKey).build();
+    this.client = OpenAIOkHttpClient.builder().apiKey(apiKey).build();
     this.model = model;
   }
 
-  ChatResult chat(List<ChatMessage> messages) {
-    ChatRequest request =
-        ChatRequest.builder()
-            .model(model)
-            .messages(messages)
-            .build();
+  ChatResult chat(List<ChatCompletionMessageParam> messages) {
     try {
-      CompletableFuture<Chat> future = client.chatCompletions().create(request);
-      Chat result = future.get(60, TimeUnit.SECONDS);
-      if (result.getChoices() == null || result.getChoices().isEmpty()) {
+      ChatCompletionCreateParams request =
+          ChatCompletionCreateParams.builder()
+              .model(model)
+              .messages(messages)
+              .build();
+      ChatCompletion result = client.chat().completions().create(request);
+      if (result.choices() == null || result.choices().isEmpty()) {
         return new ChatResult(null, null);
       }
-      Chat.Choice choice = result.getChoices().get(0);
-      ChatMessage.ResponseMessage message = choice.getMessage();
-      String content = message == null ? null : message.getContent();
-      return new ChatResult(content, choice.getFinishReason());
+      ChatCompletion.Choice choice = result.choices().get(0);
+      String content = choice.message().content().orElse(null);
+      String finishReason = choice.finishReason().asString();
+      return new ChatResult(content, finishReason);
     } catch (Exception e) {
       return new ChatResult(null, null);
     }
@@ -42,11 +41,10 @@ final class ChatGptClient {
 
   List<String> listModels() {
     try {
-      CompletableFuture<List<Model>> future = client.models().getList();
-      List<Model> models = future.get(30, TimeUnit.SECONDS);
+      ModelListPage page = client.models().list();
       List<String> names = new ArrayList<>();
-      for (Model model : models) {
-        String id = model.getId();
+      for (Model model : page.data()) {
+        String id = model.id();
         if (id == null || id.isBlank()) {
           continue;
         }
