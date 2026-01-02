@@ -33,7 +33,7 @@ class JdbcConnectCommandsTest {
 
   @Test
   void connectWithValidH2Url() {
-    commands.connect(context, "jdbc:h2:mem:test");
+    commands.connect(context, "jdbc:h2:mem:test", "sa", "");
     context.out.flush();
     assertTrue(output.toString().contains("Connected"));
     
@@ -61,18 +61,18 @@ class JdbcConnectCommandsTest {
 
   @Test
   void connectWithNullUser() {
-    commands.connect(context, "jdbc:h2:mem:test", null, null);
+    commands.connect(context, "jdbc:h2:mem:test", "sa", "");
     context.out.flush();
     assertTrue(output.toString().contains("Connected"));
   }
 
   @Test
   void multipleConnectionsReplacesPrevious() {
-    commands.connect(context, "jdbc:h2:mem:test1");
+    commands.connect(context, "jdbc:h2:mem:test1", "sa", "");
     Connection firstConn = JdbcSession.getConnection(context);
     assertNotNull(firstConn);
     
-    commands.connect(context, "jdbc:h2:mem:test2");
+    commands.connect(context, "jdbc:h2:mem:test2", "sa", "");
     Connection secondConn = JdbcSession.getConnection(context);
     assertNotNull(secondConn);
     // Different connection objects
