@@ -12,6 +12,7 @@ dependencies {
   runtimeOnly project(':xanadu-chatgpt')
   runtimeOnly project(':xanadu-claude')
   testImplementation 'org.junit.jupiter:junit-jupiter:6.0.1'
+  testImplementation testFixtures(project(':xanadu-core'))
 }
 
 test {
