@@ -1,7 +1,10 @@
 package codes.ry.xanadu.llm;
 
+import codes.ry.xanadu.Frame;
+import codes.ry.xanadu.Image;
 import codes.ry.xanadu.StyledImage;
 import codes.ry.xanadu.StyledImages;
+import codes.ry.xanadu.Style;
 import codes.ry.xanadu.TextStyle;
 import codes.ry.xanadu.command.CommandContext;
 import codes.ry.xanadu.command.CommandInput;
@@ -430,12 +433,94 @@ public final class AgentCommands implements CommandProvider {
 
   private void renderIndented(CommandContext context, String response) {
     int maxWidth = context.maxWidth > 0 ? Math.max(1, context.maxWidth - 2) : Integer.MAX_VALUE;
-    FormattedText formatted = new FormattedText(response, maxWidth);
+    List<String> lines = java.util.List.of(response.split("\\R", -1));
+    StringBuilder buffer = new StringBuilder();
+    boolean inFence = false;
+    for (int i = 0; i < lines.size(); i++) {
+      String line = lines.get(i);
+      if (line.startsWith("```")) {
+        inFence = !inFence;
+      }
+      HeaderLine header = inFence ? null : parseHeaderLine(line);
+      if (header != null) {
+        renderTextBlock(context, buffer, maxWidth);
+        renderHeaderFrame(context, header, maxWidth);
+        continue;
+      }
+      if (buffer.length() > 0) {
+        buffer.append('\n');
+      }
+      buffer.append(line);
+    }
+    renderTextBlock(context, buffer, maxWidth);
+    context.out.println();
+    context.out.flush();
+  }
+
+  private void renderTextBlock(CommandContext context, StringBuilder buffer, int maxWidth) {
+    if (buffer.length() == 0) {
+      return;
+    }
+    FormattedText formatted = new FormattedText(buffer.toString(), maxWidth);
     var padded = StyledImages.offset(formatted, 0, 2);
     var paddedFrame = context.style.frame(formatted.height, formatted.width + 2, padded);
     context.render(paddedFrame);
-    context.out.println();
-    context.out.flush();
+    buffer.setLength(0);
+  }
+
+  private void renderHeaderFrame(CommandContext context, HeaderLine header, int maxWidth) {
+    String text = header.text;
+    if (text == null || text.isBlank()) {
+      return;
+    }
+    Style style = switch (header.level) {
+      case 1 -> Style.boxHeader();
+      case 2 -> Style.doubleHeader();
+      default -> Style.header();
+    };
+    String trimmed = text.trim();
+    int width = Math.min(trimmed.length(), maxWidth);
+    Image title = Image.text(trimmed);
+    Frame frame = style.frame(1, width, title.limit(1, width)).border(style);
+    var padded = StyledImages.offset(frame, 0, 2);
+    var paddedFrame = context.style.frame(frame.drawRect.height, frame.drawRect.width + 2, padded);
+    context.render(paddedFrame);
+  }
+
+  private HeaderLine parseHeaderLine(String line) {
+    if (line == null) {
+      return null;
+    }
+    int i = 0;
+    while (i < line.length() && line.charAt(i) == ' ') {
+      i++;
+    }
+    int start = i;
+    while (i < line.length() && line.charAt(i) == '#') {
+      i++;
+    }
+    int level = i - start;
+    if (level <= 0 || level > 6) {
+      return null;
+    }
+    if (i < line.length() && line.charAt(i) != ' ') {
+      return null;
+    }
+    String text = line.substring(i).trim();
+    if (text.isEmpty()) {
+      return null;
+    }
+    return new HeaderLine(level, text);
+  }
+
+  private static final class HeaderLine {
+    private final int level;
+    private final String text;
+
+    private HeaderLine(int level, String text) {
+      this.level = level;
+      this.text = text;
+    }
   }
 
   private AgentBackend currentBackend(CommandContext context) {

@@ -1,4 +1,7 @@
 codes.ry.xanadu.commands.SystemCommands
 codes.ry.xanadu.commands.DemoCommands
+codes.ry.xanadu.commands.LabelCommands
+codes.ry.xanadu.commands.MatrixCommands
+codes.ry.xanadu.commands.StatsCommands
 codes.ry.xanadu.commands.VizCommands
 codes.ry.xanadu.commands.DrawCommands

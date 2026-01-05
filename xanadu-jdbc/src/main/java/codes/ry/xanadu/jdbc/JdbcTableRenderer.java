@@ -2,8 +2,7 @@ package codes.ry.xanadu.jdbc;
 
 import codes.ry.xanadu.Frame;
 import codes.ry.xanadu.Image;
-import codes.ry.xanadu.Rect;
-import codes.ry.xanadu.StyledImage;
+import codes.ry.xanadu.Style;
 import codes.ry.xanadu.TextStyle;
 import codes.ry.xanadu.StyledImages;
 import codes.ry.xanadu.command.CommandContext;
@@ -59,16 +58,11 @@ final class JdbcTableRenderer {
   private void dumpBatch(String[] names, int[] widths, List<Object[]> rows) {
     List<Image[]> rendered = renderRows(rows);
     int[] computed = computeWidths(names, rendered, rows);
-    Frame headerBase = rowFrame(names, computed, true);
-    Frame headerRow = headerBase;
+    Frame headerRow = rowFrame(names, computed, true, Style.boxHeader());
     Frame table = headerRow;
     for (int i = 0; i < rows.size(); i++) {
       Frame rowFrame = rowFrame(rendered.get(i), rows.get(i), computed);
       table = table.appendVertical(rowFrame);
-    }
-    table = addHeaderSeparator(table, headerRow);
-    if (rows.isEmpty()) {
-      table = addBottomBorder(table, headerRow);
     }
     boolean clip = context.clipFrames();
     context.setClipFrames(false);
@@ -97,7 +91,7 @@ final class JdbcTableRenderer {
     return combined == null ? context.style.frame(1, 1, Image.flood(' ')) : combined;
   }
 
-  private Frame rowFrame(String[] row, int[] widths, boolean header) {
+  private Frame rowFrame(String[] row, int[] widths, boolean header, Style borderStyle) {
     Frame combined = null;
     for (int i = 0; i < row.length; i++) {
       String value = row[i] == null ? "" : row[i];
@@ -110,7 +104,7 @@ final class JdbcTableRenderer {
       if (header) {
         limited = StyledImages.withStyle(limited, TextStyle.BOLD);
       }
-      Frame cellFrame = context.style.frame(1, widths[i], limited).border();
+      Frame cellFrame = context.style.frame(1, widths[i], limited).border(borderStyle);
       combined = combined == null ? cellFrame : combined.append(cellFrame);
     }
     return combined == null ? context.style.frame(1, 1, Image.flood(' ')) : combined;
@@ -153,83 +147,6 @@ final class JdbcTableRenderer {
       return 0;
     }
     return value.toString().length();
-  }
-
-  private Frame addHeaderSeparator(Frame table, Frame headerRow) {
-    int separatorRow = headerRow.height;
-    int minJ = table.drawRect.left;
-    int maxJ = table.drawRect.right;
-    Image separator = new StyledImage() {
-      @Override
-      public char at(int i, int j) {
-        if (i != separatorRow || j < minJ || j >= maxJ) {
-          return ' ';
-        }
-        char border = headerRow.image.at(separatorRow, j);
-        if (isBoundary(border)) {
-          return '╪';
-        }
-        return '═';
-      }
-      
-      @Override
-      public TextStyle styleAt(int i, int j) {
-        char c = at(i, j);
-        if (c == ' ') {
-          // Preserve underlying style for spaces
-          if (table.image instanceof StyledImage) {
-            return ((StyledImage) table.image).styleAt(i, j);
-          }
-          return TextStyle.NORMAL;
-        }
-        // Separator characters are always NORMAL style
-        return TextStyle.NORMAL;
-      }
-    };
-    Image combined = StyledImages.overlay(table.image, separator);
-    return table.withImage(combined);
-  }
-
-  private Frame addBottomBorder(Frame table, Frame headerRow) {
-    int bottomRow = table.drawRect.bottom;
-    Image combined;
-    if (table.image instanceof StyledImage) {
-      StyledImage styledTable = (StyledImage) table.image;
-      combined = new StyledImage() {
-        @Override
-        public char at(int i, int j) {
-          if (i == bottomRow) {
-            return headerRow.image.at(headerRow.height, j);
-          }
-          return table.image.at(i, j);
-        }
-        
-        @Override
-        public TextStyle styleAt(int i, int j) {
-          if (i == bottomRow) {
-            return TextStyle.NORMAL;
-          }
-          return styledTable.styleAt(i, j);
-        }
-      };
-    } else {
-      combined = (i, j) -> {
-        if (i == bottomRow) {
-          return headerRow.image.at(headerRow.height, j);
-        }
-        return table.image.at(i, j);
-      };
-    }
-    Rect expanded =
-        new Rect(table.drawRect.top, table.drawRect.left, table.drawRect.height + 1, table.drawRect.width);
-    return table.withImage(combined).withDrawRect(expanded);
-  }
-
-  private boolean isBoundary(char c) {
-    if (c == ' ') {
-      return false;
-    }
-    return c != '─' && c != '═';
   }
 
   private Align alignmentFor(Object value) {
