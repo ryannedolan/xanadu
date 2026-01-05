@@ -7,6 +7,7 @@ import codes.ry.xanadu.StyledImages;
 import codes.ry.xanadu.Style;
 import codes.ry.xanadu.TextStyle;
 import codes.ry.xanadu.command.CommandContext;
+import codes.ry.xanadu.command.CommandHistory;
 import codes.ry.xanadu.command.CommandInput;
 import codes.ry.xanadu.command.CommandProvider;
 import codes.ry.xanadu.command.CommandResult;
@@ -215,74 +216,89 @@ public final class AgentCommands implements CommandProvider {
     String prompt = String.join(" ", input.args.subList(1, input.args.size()));
     List<AgentMessage> messages =
         useHistory ? history(context, backend) : freshHistory(context, backend, !allowContinuation);
-    messages.add(new AgentMessage("user", prompt));
-    List<String> lastToolCalls = List.of();
-    boolean lastToolSucceeded = true;
-    String pendingNormalized = null;
-    Continuation pendingContinuation = null;
-    String pendingContinuationName = null;
-    StringBuilder pendingToolOutput = null;
-    while (true) {
-      if (context.consumeCancel()) {
-        context.warn("Agent chat cancelled.");
-        return;
+    String previousChain = null;
+    if (!allowContinuation) {
+      previousChain = CommandHistory.currentChain(context);
+      CommandHistory.startChain(context);
+    }
+    try {
+      String historyMessage = commandHistoryMessage(context, !allowContinuation);
+      if (!historyMessage.isBlank()) {
+        messages.add(new AgentMessage("system", historyMessage));
       }
-      context.debug("Sending request to " + backend.displayName() + ".");
-      AgentResponse response = backend.chat(messages, model);
-      if (response == null || response.text() == null || response.text().isBlank()) {
-        context.error("No response from " + backend.displayName() + ".");
-        return;
-      }
-      messages.add(new AgentMessage("assistant", response.text()));
-      String normalized = backend.normalizeResponse(response.text());
-      String combined =
-          pendingNormalized == null ? normalized : pendingNormalized + "\n" + normalized;
-      ResponseParse parsed = parseResponse(combined);
-      if (parsed.incomplete) {
-        pendingNormalized = combined;
-        messages.add(new AgentMessage("user", "continue"));
-        continue;
-      }
-      pendingNormalized = null;
-      List<String> toolCalls = parsed.toolCalls;
-      if (toolCalls.isEmpty()) {
-        context.debug("Received response from " + backend.displayName() + ".");
-        renderIndented(context, combined);
-        if (response.finishReason() == AgentFinishReason.LENGTH) {
+      messages.add(new AgentMessage("user", prompt));
+      List<String> lastToolCalls = List.of();
+      boolean lastToolSucceeded = true;
+      String pendingNormalized = null;
+      Continuation pendingContinuation = null;
+      String pendingContinuationName = null;
+      StringBuilder pendingToolOutput = null;
+      while (true) {
+        if (context.consumeCancel()) {
+          context.warn("Agent chat cancelled.");
+          return;
+        }
+        context.debug("Sending request to " + backend.displayName() + ".");
+        AgentResponse response = backend.chat(messages, model);
+        if (response == null || response.text() == null || response.text().isBlank()) {
+          context.error("No response from " + backend.displayName() + ".");
+          return;
+        }
+        messages.add(new AgentMessage("assistant", response.text()));
+        String normalized = backend.normalizeResponse(response.text());
+        String combined =
+            pendingNormalized == null ? normalized : pendingNormalized + "\n" + normalized;
+        ResponseParse parsed = parseResponse(combined);
+        if (parsed.incomplete) {
+          pendingNormalized = combined;
           messages.add(new AgentMessage("user", "continue"));
           continue;
         }
-        return;
+        pendingNormalized = null;
+        List<String> toolCalls = parsed.toolCalls;
+        if (toolCalls.isEmpty()) {
+          context.debug("Received response from " + backend.displayName() + ".");
+          renderIndented(context, combined);
+          if (response.finishReason() == AgentFinishReason.LENGTH) {
+            messages.add(new AgentMessage("user", "continue"));
+            continue;
+          }
+          return;
+        }
+        if (toolCalls.equals(lastToolCalls) && lastToolSucceeded) {
+          context.warn(backend.displayName() + " repeated the same tool call; stopping.");
+          return;
+        }
+        lastToolCalls = toolCalls;
+        context.debug(backend.displayName() + " requested " + toolCalls.size() + " tool call(s).");
+        ToolRunResult runResult =
+            runToolSequence(
+                context,
+                parsed.segments,
+                pendingContinuation,
+                pendingContinuationName,
+                pendingToolOutput);
+        if (runResult.toolOutput.length() > 0) {
+          messages.add(new AgentMessage("user", runResult.toolOutput.toString()));
+        }
+        pendingContinuation = runResult.continuation;
+        pendingContinuationName = runResult.continuationName;
+        pendingToolOutput = runResult.continuation == null ? null : runResult.toolOutput;
+        if (!runResult.success) {
+          lastToolSucceeded = false;
+          return;
+        }
+        if (runResult.needsMoreInput) {
+          lastToolSucceeded = false;
+          messages.add(new AgentMessage("user", "continue"));
+          continue;
+        }
+        lastToolSucceeded = true;
       }
-      if (toolCalls.equals(lastToolCalls) && lastToolSucceeded) {
-        context.warn(backend.displayName() + " repeated the same tool call; stopping.");
-        return;
+    } finally {
+      if (!allowContinuation) {
+        CommandHistory.restoreChain(context, previousChain);
       }
-      lastToolCalls = toolCalls;
-      context.debug(backend.displayName() + " requested " + toolCalls.size() + " tool call(s).");
-      ToolRunResult runResult =
-          runToolSequence(
-              context,
-              parsed.segments,
-              pendingContinuation,
-              pendingContinuationName,
-              pendingToolOutput);
-      if (runResult.toolOutput.length() > 0) {
-        messages.add(new AgentMessage("user", runResult.toolOutput.toString()));
-      }
-      pendingContinuation = runResult.continuation;
-      pendingContinuationName = runResult.continuationName;
-      pendingToolOutput = runResult.continuation == null ? null : runResult.toolOutput;
-      if (!runResult.success) {
-        lastToolSucceeded = false;
-        return;
-      }
-      if (runResult.needsMoreInput) {
-        lastToolSucceeded = false;
-        messages.add(new AgentMessage("user", "continue"));
-        continue;
-      }
-      lastToolSucceeded = true;
     }
   }
 
@@ -366,6 +382,7 @@ public final class AgentCommands implements CommandProvider {
     sb.append(" You can define macros with `def <name> ... end`, list them with `macros`, and delete them with `undef <name>`.");
     if (delegated) {
       sb.append(" This is a delegated task with no follow-up; avoid leading questions at the end.");
+      sb.append(" If a command fails, review the command history and retry with adjusted inputs.");
     }
     String usage = CommandTooling.detailedUsage(context.commandService());
     if (!usage.isBlank()) {
@@ -373,6 +390,43 @@ public final class AgentCommands implements CommandProvider {
       sb.append(usage);
     }
     return sb.toString();
+  }
+
+  private String commandHistoryMessage(CommandContext context, boolean includeAgentHistory) {
+    List<CommandHistory.Entry> entries = CommandHistory.snapshot(context);
+    if (entries.isEmpty()) {
+      return "";
+    }
+    java.util.Set<String> allowedChains = java.util.Set.of();
+    if (includeAgentHistory) {
+      String currentChain = CommandHistory.currentChain(context);
+      allowedChains = new java.util.HashSet<>(CommandHistory.chainAncestors(context, currentChain));
+    }
+    StringBuilder sb = new StringBuilder();
+    sb.append("Command history (oldest to newest):\n");
+    int index = 1;
+    for (CommandHistory.Entry entry : entries) {
+      sb.append(index++).append(". ");
+      sb.append(entry.source() == CommandHistory.Source.USER ? "[user] " : "[agent] ");
+      if (entry.success() != null) {
+        sb.append(entry.success() ? "✓ " : "✗ ");
+      }
+      sb.append(entry.command()).append('\n');
+      if (includeAgentHistory
+          && entry.source() == CommandHistory.Source.AGENT
+          && entry.output() != null
+          && !entry.output().isBlank()
+          && (entry.chainId() != null && allowedChains.contains(entry.chainId()))) {
+        sb.append("    Output:\n");
+        for (String line : entry.output().split("\\R", -1)) {
+          sb.append("      ").append(line).append('\n');
+        }
+      }
+    }
+    if (index == 1) {
+      return "";
+    }
+    return sb.toString().trim();
   }
 
   private ResponseParse parseResponse(String response) {
