@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
   implementation project(':xanadu-core')
-  implementation 'com.openai:openai-java:4.13.0'
+  implementation libs.openai
 }
 
 test {

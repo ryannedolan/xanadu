@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public final class JdbcCsvCommands implements CommandProvider {
   private static final String LOAD_COMMAND = "load";
@@ -198,7 +199,13 @@ public final class JdbcCsvCommands implements CommandProvider {
     String token = args.get(0);
     if (!looksLikePath(token)) {
       String table = token;
-      CsvOptions options = parseOptions(context, args, 1, false, false);
+      String path = null;
+      int index = 1;
+      if (index < args.size() && looksLikePath(args.get(index))) {
+        path = args.get(index);
+        index++;
+      }
+      CsvOptions options = parseOptions(context, args, index, false, false);
       if (options == null) {
         return;
       }
@@ -206,7 +213,9 @@ public final class JdbcCsvCommands implements CommandProvider {
         context.error("Unexpected argument: " + args.get(options.nextIndex));
         return;
       }
-      String path = defaultPathForTable(table);
+      if (path == null) {
+        path = defaultPathForTable(table);
+      }
       String sql = "select * from " + table;
       extractCsv(context, path, sql, options);
       return;
@@ -335,6 +344,17 @@ public final class JdbcCsvCommands implements CommandProvider {
   private List<String> resolveColumns(Connection connection, String table) throws SQLException {
     TableName name = splitTableName(connection, table);
     DatabaseMetaData meta = connection.getMetaData();
+    List<String> columns = readColumns(meta, name);
+    if (columns.isEmpty()) {
+      TableName normalized = normalizeTableName(meta, name);
+      if (!sameTableName(normalized, name)) {
+        columns = readColumns(meta, normalized);
+      }
+    }
+    return columns;
+  }
+
+  private List<String> readColumns(DatabaseMetaData meta, TableName name) throws SQLException {
     List<ColumnInfo> columns = new ArrayList<>();
     try (ResultSet rs = meta.getColumns(name.catalog, name.schema, name.table, null)) {
       while (rs.next()) {
@@ -351,9 +371,37 @@ public final class JdbcCsvCommands implements CommandProvider {
     return names;
   }
 
+  private TableName normalizeTableName(DatabaseMetaData meta, TableName name) throws SQLException {
+    String catalog = name.catalog;
+    String schema = name.schema;
+    String table = name.table;
+    if (meta.storesUpperCaseIdentifiers()) {
+      if (schema != null) {
+        schema = schema.toUpperCase(Locale.ROOT);
+      }
+      if (table != null) {
+        table = table.toUpperCase(Locale.ROOT);
+      }
+    } else if (meta.storesLowerCaseIdentifiers()) {
+      if (schema != null) {
+        schema = schema.toLowerCase(Locale.ROOT);
+      }
+      if (table != null) {
+        table = table.toLowerCase(Locale.ROOT);
+      }
+    }
+    return new TableName(catalog, schema, table);
+  }
+
+  private boolean sameTableName(TableName a, TableName b) {
+    return Objects.equals(a.catalog, b.catalog)
+        && Objects.equals(a.schema, b.schema)
+        && Objects.equals(a.table, b.table);
+  }
+
   private boolean looksLikePath(String value) {
     String extension = extensionOf(value);
-    return "csv".equalsIgnoreCase(extension);
+    return "csv".equalsIgnoreCase(extension) || "tsv".equalsIgnoreCase(extension);
   }
 
   private String extensionOf(String value) {

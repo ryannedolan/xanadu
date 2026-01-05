@@ -109,6 +109,11 @@ public final class JdbcSqlCommands implements CommandProvider {
       context.error("SQL is empty.");
       return;
     }
+    Connection connection = JdbcSession.getConnection(context);
+    if (connection == null) {
+      context.error("Not connected.");
+      return;
+    }
     boolean hasSemicolon = endsWithSemicolon(sql);
     if (!hasSemicolon && context.allowContinuation()) {
       startContinuation(context, name, sql);
@@ -120,11 +125,6 @@ public final class JdbcSqlCommands implements CommandProvider {
     String statement = sql;
     if (!SQL_COMMAND.equals(name) && !DDL_COMMAND.equals(name)) {
       statement = name + " " + sql;
-    }
-    Connection connection = JdbcSession.getConnection(context);
-    if (connection == null) {
-      context.error("Not connected.");
-      return;
     }
     try (Statement stmt = connection.createStatement()) {
       if (DDL_COMMAND.equals(name)) {

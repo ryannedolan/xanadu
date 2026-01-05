@@ -4,8 +4,8 @@ plugins {
 
 dependencies {
   implementation project(':xanadu-core')
-  testImplementation 'org.junit.jupiter:junit-jupiter:6.0.1'
-  testImplementation 'com.h2database:h2:2.3.232'
+  testImplementation libs.junit.jupiter
+  testImplementation libs.h2
 }
 
 test {

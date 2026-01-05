@@ -1,0 +1,15 @@
+[versions]
+junit = "5.10.2"
+h2 = "2.3.232"
+jline = "3.26.3"
+openai = "4.13.0"
+genai = "1.32.0"
+jackson = "2.19.0"
+
+[libraries]
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
+jline = { module = "org.jline:jline", version.ref = "jline" }
+openai = { module = "com.openai:openai-java", version.ref = "openai" }
+google-genai = { module = "com.google.genai:google-genai", version.ref = "genai" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
