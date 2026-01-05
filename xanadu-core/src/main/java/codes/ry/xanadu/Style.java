@@ -68,6 +68,13 @@ public final class Style {
     GlyphSet single = boxGlyphs();
     GlyphSet dual = doubleBoxGlyphs();
     Map<Character, Integer> masks = mergeMasks(single.masks, dual.masks);
+    addMask(masks, '═', EAST | WEST | EDGE_BOTTOM);
+    addMask(masks, '╘', NORTH | EAST | EDGE_BOTTOM);
+    addMask(masks, '╛', NORTH | WEST | EDGE_BOTTOM);
+    addMask(masks, '╧', NORTH | EAST | WEST | EDGE_BOTTOM);
+    addMask(masks, '╞', NORTH | SOUTH | EAST | EDGE_BOTTOM);
+    addMask(masks, '╡', NORTH | SOUTH | WEST | EDGE_BOTTOM);
+    addMask(masks, '╪', NORTH | SOUTH | EAST | WEST | EDGE_BOTTOM);
     char[] mixedBottom = mixedBottomGlyphs(dual.glyphs);
     return new Style(masks, headerGlyphs(single.glyphs, mixedBottom, false));
   }
@@ -232,6 +239,9 @@ public final class Style {
     glyphs[NORTH | EAST] = '╘';
     glyphs[NORTH | WEST] = '╛';
     glyphs[NORTH | EAST | WEST] = '╧';
+    glyphs[NORTH | SOUTH | EAST] = '╞';
+    glyphs[NORTH | SOUTH | WEST] = '╡';
+    glyphs[NORTH | SOUTH | EAST | WEST] = '╪';
     return glyphs;
   }
 
@@ -276,5 +286,9 @@ public final class Style {
   private static void add(Map<Character, Integer> masks, char[] glyphs, char glyph, int mask) {
     masks.put(glyph, mask);
     glyphs[mask] = glyph;
+  }
+
+  private static void addMask(Map<Character, Integer> masks, char glyph, int mask) {
+    masks.put(glyph, mask);
   }
 }

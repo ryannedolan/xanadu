@@ -79,8 +79,12 @@ class JdbcTableRendererTest {
     }
     List<String> lines = new java.util.ArrayList<>();
     lines.add(borderLine('┌', '┬', '┐', widths, '─'));
-    lines.add(ANSI_BOLD + dataLine('│', '│', '│', widths, names, true) + ANSI_RESET);
-    lines.add(borderLine('╪', '╪', '╪', widths, '═'));
+    lines.add(dataLine('│', '│', '│', widths, names, true));
+    if (rows.isEmpty()) {
+      lines.add(borderLine('╘', '╧', '╛', widths, '═'));
+    } else {
+      lines.add(borderLine('╞', '╪', '╡', widths, '═'));
+    }
     for (int r = 0; r < rows.size(); r++) {
       Object[] row = rows.get(r);
       lines.add(dataLine('│', '│', '│', widths, row, false));
@@ -88,7 +92,9 @@ class JdbcTableRendererTest {
         lines.add(borderLine('├', '┼', '┤', widths, '─'));
       }
     }
-    lines.add(borderLine('└', '┴', '┘', widths, '─'));
+    if (!rows.isEmpty()) {
+      lines.add(borderLine('└', '┴', '┘', widths, '─'));
+    }
     return "\n" + String.join("\n", lines) + "\n";
   }
 
@@ -111,7 +117,11 @@ class JdbcTableRendererTest {
     for (int i = 0; i < widths.length; i++) {
       Object value = values[i];
       String text = value == null ? "" : value.toString();
-      sb.append(padAligned(text, widths[i], alignmentFor(value, header)));
+      String padded = padAligned(text, widths[i], alignmentFor(value, header));
+      if (header) {
+        padded = boldNonSpace(padded);
+      }
+      sb.append(padded);
       sb.append(i + 1 == widths.length ? right : mid);
     }
     return sb.toString();
@@ -148,6 +158,19 @@ class JdbcTableRendererTest {
     sb.append(value);
     for (int i = 0; i < right; i++) {
       sb.append(' ');
+    }
+    return sb.toString();
+  }
+
+  private String boldNonSpace(String value) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < value.length(); i++) {
+      char c = value.charAt(i);
+      if (c == ' ') {
+        sb.append(c);
+      } else {
+        sb.append(ANSI_BOLD).append(c).append(ANSI_RESET);
+      }
     }
     return sb.toString();
   }

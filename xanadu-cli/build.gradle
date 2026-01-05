@@ -5,13 +5,13 @@ plugins {
 
 dependencies {
   implementation project(':xanadu-core')
-  implementation 'org.jline:jline:3.26.3'
-  runtimeOnly 'com.h2database:h2:2.3.232'
+  implementation libs.jline
+  runtimeOnly libs.h2
   runtimeOnly project(':xanadu-jdbc')
   runtimeOnly project(':xanadu-gemini')
   runtimeOnly project(':xanadu-chatgpt')
   runtimeOnly project(':xanadu-claude')
-  testImplementation 'org.junit.jupiter:junit-jupiter:6.0.1'
+  testImplementation libs.junit.jupiter
   testImplementation testFixtures(project(':xanadu-core'))
 }
 
