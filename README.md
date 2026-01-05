@@ -11,7 +11,7 @@ built-in visualization and drawing commands.
 > connect jdbc:h2:mem:test
 Connected.
 > chat
-chat > agent delegate Come up with a multi-step workflow that involves creating tables, inserting data, querying, and analyzing data. Then run the plan. Delegate each task to sub-agents, having your sub-agents run the actual commands.
+chat > Come up with a multi-step workflow that involves creating tables, inserting data, querying, and analyzing data. Then run the plan. Delegate each task to sub-agents, having your sub-agents run the actual commands.
 
 
   I’ll do this in four stages. Each stage is delegated to a fresh sub‑agent that will actually execute the
