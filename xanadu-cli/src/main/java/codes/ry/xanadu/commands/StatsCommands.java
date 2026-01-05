@@ -8,7 +8,7 @@ import codes.ry.xanadu.command.CommandInput;
 import codes.ry.xanadu.command.CommandProvider;
 import codes.ry.xanadu.command.CommandResult;
 import codes.ry.xanadu.command.ReportLabels;
-import codes.ry.xanadu.render.RenderContext;
+import codes.ry.xanadu.render.TableRenderer;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -510,56 +510,19 @@ public final class StatsCommands implements CommandProvider {
     if (matrix.isEmpty()) {
       return;
     }
-    RenderContext sizing = new RenderContext(context.style, 0, 0, context.renderService, false);
-    int cols = matrix.get(0).size();
-    int[] widths = new int[cols];
-    List<Image[]> rendered = new ArrayList<>(matrix.size());
-    for (List<Object> row : matrix) {
-      Image[] rowImages = new Image[cols];
-      for (int i = 0; i < cols; i++) {
-        Object value = i < row.size() ? row.get(i) : "";
-        Image image = context.renderService.render(value, sizing);
-        rowImages[i] = image;
-        widths[i] = Math.max(widths[i], widthForCell(value, image));
-      }
-      rendered.add(rowImages);
-    }
-    Frame table = null;
-    for (int r = 0; r < rendered.size(); r++) {
-      Image[] rowImages = rendered.get(r);
-      List<Object> rowValues = matrix.get(r);
-      Frame rowFrame = null;
-      for (int i = 0; i < rowImages.length; i++) {
-        Image cell = rowImages[i];
-        Object value = i < rowValues.size() ? rowValues.get(i) : "";
-        int cellHeight = 1;
-        if (cell instanceof Frame) {
-          cellHeight = Math.max(1, ((Frame) cell).drawRect.height);
-        }
-        int contentWidth = Math.min(widths[i], widthForCell(value, cell));
-        int offset = Math.max(0, widths[i] - contentWidth);
-        Image aligned = cell.offset(0, offset).limit(cellHeight, widths[i]);
-        Frame cellFrame = context.style.frame(cellHeight, widths[i], aligned).border();
-        rowFrame = rowFrame == null ? cellFrame : rowFrame.append(cellFrame);
-      }
-      if (rowFrame == null) {
-        rowFrame = context.style.frame(1, 1, Image.flood(' ')).border();
-      }
-      table = table == null ? rowFrame : table.appendVertical(rowFrame);
-    }
+    List<Object> header = matrix.get(0);
+    List<List<Object>> rows =
+        matrix.size() > 1 ? matrix.subList(1, matrix.size()) : java.util.List.of();
+    Frame table =
+        TableRenderer.render(
+            context.style,
+            context.renderService,
+            rows,
+            header,
+            TableRenderer.rightAlignment());
     if (table != null) {
       context.render(table);
     }
-  }
-
-  private int widthForCell(Object value, Image image) {
-    if (image instanceof Frame) {
-      return Math.max(1, ((Frame) image).drawRect.width);
-    }
-    if (value == null) {
-      return 0;
-    }
-    return value.toString().length();
   }
 
   private static final class Stats {
