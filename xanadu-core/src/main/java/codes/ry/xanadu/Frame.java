@@ -82,6 +82,18 @@ public class Frame implements Image {
       if (isBorderCell(i, j - 1, maxI, maxJ)) {
         mask |= 0b0001;
       }
+      if (i == -1) {
+        mask |= Style.EDGE_TOP;
+      }
+      if (i == maxI) {
+        mask |= Style.EDGE_BOTTOM;
+      }
+      if (j == -1) {
+        mask |= Style.EDGE_LEFT;
+      }
+      if (j == maxJ) {
+        mask |= Style.EDGE_RIGHT;
+      }
       return style.glyph(mask);
     };
     Image content = StyledImages.clip(image, height, width);

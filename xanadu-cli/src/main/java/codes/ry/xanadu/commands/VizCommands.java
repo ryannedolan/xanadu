@@ -8,6 +8,7 @@ import codes.ry.xanadu.command.CommandContext;
 import codes.ry.xanadu.command.CommandInput;
 import codes.ry.xanadu.command.CommandProvider;
 import codes.ry.xanadu.command.CommandResult;
+import codes.ry.xanadu.command.ReportLabels;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,8 @@ public final class VizCommands implements CommandProvider {
   private static final int BOX_BAR_THICKNESS = 3;
   private static final int BOX_BAR_GAP = 1;
   private static final int BOX_BAR_GAP_WIDE = 2;
+  private static final String ANSI_BOLD = "\u001b[1m";
+  private static final String ANSI_RESET = "\u001b[0m";
 
   @Override
   public boolean supports(CommandInput input) {
@@ -62,15 +65,16 @@ public final class VizCommands implements CommandProvider {
     if (values == null) {
       return;
     }
+    ReportLabels.Labels labels = ReportLabels.consume(context);
     switch (input.name.toLowerCase()) {
       case BAR:
-        context.render(barChart(context, values));
+        renderWithLabels(context, labels, barChart(context, values));
         return;
       case HBAR:
-        context.render(horizontalBars(context, values));
+        renderWithLabels(context, labels, horizontalBars(context, values));
         return;
       case SPARK:
-        context.render(sparkline(context, values));
+        renderWithLabels(context, labels, sparkline(context, values));
         return;
       default:
         context.error("Unknown command: " + input.name);
@@ -117,6 +121,41 @@ public final class VizCommands implements CommandProvider {
     } catch (NumberFormatException e) {
       return false;
     }
+  }
+
+  private void renderWithLabels(CommandContext context, ReportLabels.Labels labels, Frame frame) {
+    if (labels != null && !labels.isEmpty()) {
+      if (!isBlank(labels.title)) {
+        context.out.println(ANSI_BOLD + labels.title + ANSI_RESET);
+      }
+      if (!isBlank(labels.subtitle)) {
+        context.out.println(labels.subtitle);
+      }
+      context.out.flush();
+    }
+    context.render(frame);
+    if (labels != null && !labels.isEmpty()) {
+      boolean printed = false;
+      if (!isBlank(labels.xLabel)) {
+        context.out.println("X: " + labels.xLabel);
+        printed = true;
+      }
+      if (!isBlank(labels.yLabel)) {
+        context.out.println("Y: " + labels.yLabel);
+        printed = true;
+      }
+      if (!isBlank(labels.note)) {
+        context.out.println("Note: " + labels.note);
+        printed = true;
+      }
+      if (printed) {
+        context.out.flush();
+      }
+    }
+  }
+
+  private boolean isBlank(String value) {
+    return value == null || value.isBlank();
   }
 
   private Frame barChart(CommandContext context, List<Float> values) {
