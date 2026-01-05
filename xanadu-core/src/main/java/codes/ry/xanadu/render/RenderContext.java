@@ -51,8 +51,9 @@ public final class RenderContext {
       TextStyle currentStyle = TextStyle.NORMAL;
       int drawI = frame == null ? i : i + frame.drawRect.top;
       for (int j = 0; j < width; j++) {
+        int drawJ = frame == null ? j : j + frame.drawRect.left;
         if (styled != null) {
-          TextStyle nextStyle = styled.styleAt(drawI, j);
+          TextStyle nextStyle = styled.styleAt(drawI, drawJ);
           if (nextStyle != currentStyle) {
             if (nextStyle == TextStyle.BOLD) {
               writer.append(ANSI_BOLD);
