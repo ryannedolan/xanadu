@@ -24,7 +24,10 @@ public final class VizCommands implements CommandProvider {
   @Override
   public boolean supports(CommandInput input) {
     String name = input.name.toLowerCase();
-    return BAR.equals(name) || HBAR.equals(name) || SPARK.equals(name);
+    if (!BAR.equals(name) && !HBAR.equals(name) && !SPARK.equals(name)) {
+      return false;
+    }
+    return input.args.isEmpty() || allNumeric(input.args);
   }
 
   @Override
@@ -93,6 +96,27 @@ public final class VizCommands implements CommandProvider {
       }
     }
     return values;
+  }
+
+  private boolean allNumeric(List<String> args) {
+    for (String raw : args) {
+      if (!isNumeric(raw)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean isNumeric(String value) {
+    if (value == null || value.isBlank()) {
+      return false;
+    }
+    try {
+      Float.parseFloat(value);
+      return true;
+    } catch (NumberFormatException e) {
+      return false;
+    }
   }
 
   private Frame barChart(CommandContext context, List<Float> values) {
