@@ -2,6 +2,7 @@ package codes.ry.xanadu.llm;
 
 import codes.ry.xanadu.command.CapturePrintWriter;
 import codes.ry.xanadu.command.CommandContext;
+import codes.ry.xanadu.command.CommandHistory;
 import codes.ry.xanadu.command.CommandInput;
 import codes.ry.xanadu.command.CommandParser;
 import codes.ry.xanadu.command.CommandProvider;
@@ -76,6 +77,8 @@ public final class CommandTooling {
     child.setRenderTap(capture, Integer.MAX_VALUE, Integer.MAX_VALUE, false);
     child.setAllowContinuation(allowContinuation);
     child.resetFailure();
+    boolean success = true;
+    String failureMessage = null;
     try {
       CommandResult result = command.get().execute(child);
       if (result != null && result.isFailure()) {
@@ -83,12 +86,20 @@ public final class CommandTooling {
       }
     } catch (RuntimeException e) {
       child.error("Command failed: " + e.getMessage());
-      return Result.failure("Command failed: " + e.getMessage());
+      success = false;
+      failureMessage = "Command failed: " + e.getMessage();
     } finally {
       writer.flush();
     }
-    boolean success = !child.failed();
-    return new Result(output.toString(), success, child.continuation());
+    if (child.failed()) {
+      success = false;
+    }
+    String outputText = output.toString();
+    CommandHistory.recordAgent(baseContext, line, outputText, success);
+    if (!success) {
+      return Result.failure(failureMessage == null ? "Command failed." : failureMessage);
+    }
+    return new Result(outputText, true, child.continuation());
   }
 
   private static List<CommandProvider> orderedProviders(CommandService service) {

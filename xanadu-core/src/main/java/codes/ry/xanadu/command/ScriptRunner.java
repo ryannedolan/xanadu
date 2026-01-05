@@ -63,6 +63,11 @@ public final class ScriptRunner {
       return false;
     }
     CommandResult result = command.get().execute(context);
-    return result == null || !result.isFailure();
+    boolean success = result == null || !result.isFailure();
+    if (context.failed()) {
+      success = false;
+    }
+    CommandHistory.recordUser(context, line, success);
+    return success;
   }
 }

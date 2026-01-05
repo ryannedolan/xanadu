@@ -7,6 +7,7 @@ import codes.ry.xanadu.StyledImages;
 import codes.ry.xanadu.Style;
 import codes.ry.xanadu.TextStyle;
 import codes.ry.xanadu.command.CommandContext;
+import codes.ry.xanadu.command.CommandHistory;
 import codes.ry.xanadu.command.CommandInput;
 import codes.ry.xanadu.command.CommandProvider;
 import codes.ry.xanadu.command.CommandResult;
@@ -215,6 +216,10 @@ public final class AgentCommands implements CommandProvider {
     String prompt = String.join(" ", input.args.subList(1, input.args.size()));
     List<AgentMessage> messages =
         useHistory ? history(context, backend) : freshHistory(context, backend, !allowContinuation);
+    String historyMessage = commandHistoryMessage(context, !allowContinuation);
+    if (!historyMessage.isBlank()) {
+      messages.add(new AgentMessage("system", historyMessage));
+    }
     messages.add(new AgentMessage("user", prompt));
     List<String> lastToolCalls = List.of();
     boolean lastToolSucceeded = true;
@@ -366,6 +371,7 @@ public final class AgentCommands implements CommandProvider {
     sb.append(" You can define macros with `def <name> ... end`, list them with `macros`, and delete them with `undef <name>`.");
     if (delegated) {
       sb.append(" This is a delegated task with no follow-up; avoid leading questions at the end.");
+      sb.append(" If a command fails, review the command history and retry with adjusted inputs.");
     }
     String usage = CommandTooling.detailedUsage(context.commandService());
     if (!usage.isBlank()) {
@@ -373,6 +379,37 @@ public final class AgentCommands implements CommandProvider {
       sb.append(usage);
     }
     return sb.toString();
+  }
+
+  private String commandHistoryMessage(CommandContext context, boolean includeAgentHistory) {
+    List<CommandHistory.Entry> entries = CommandHistory.snapshot(context);
+    if (entries.isEmpty()) {
+      return "";
+    }
+    StringBuilder sb = new StringBuilder();
+    sb.append("Command history (oldest to newest):\n");
+    int index = 1;
+    for (CommandHistory.Entry entry : entries) {
+      if (!includeAgentHistory && entry.source() != CommandHistory.Source.USER) {
+        continue;
+      }
+      sb.append(index++).append(". ");
+      sb.append(entry.source() == CommandHistory.Source.USER ? "[user] " : "[agent] ");
+      if (entry.success() != null) {
+        sb.append(entry.success() ? "✓ " : "✗ ");
+      }
+      sb.append(entry.command()).append('\n');
+      if (includeAgentHistory && entry.output() != null && !entry.output().isBlank()) {
+        sb.append("    Output:\n");
+        for (String line : entry.output().split("\\R", -1)) {
+          sb.append("      ").append(line).append('\n');
+        }
+      }
+    }
+    if (index == 1) {
+      return "";
+    }
+    return sb.toString().trim();
   }
 
   private ResponseParse parseResponse(String response) {

@@ -1,6 +1,7 @@
 package codes.ry.xanadu;
 
 import codes.ry.xanadu.command.CommandContext;
+import codes.ry.xanadu.command.CommandHistory;
 import codes.ry.xanadu.command.CommandInput;
 import codes.ry.xanadu.command.CommandParser;
 import codes.ry.xanadu.command.CommandNames;
@@ -67,16 +68,27 @@ public final class Repl {
         context.error("Unknown command: " + input.name);
         continue;
       }
+      boolean recorded = false;
+      boolean success = false;
       context.setSize(reader.getTerminal().getWidth(), reader.getTerminal().getHeight());
       context.resetFailure();
       try {
         CommandResult result = command.get().execute(context);
+        success = result == null || !result.isFailure();
+        if (context.failed()) {
+          success = false;
+        }
+        CommandHistory.recordUser(context, line, success);
+        recorded = true;
         if (result != null && result.isFailure()) {
           context.clearContinuation();
         }
       } catch (ExitSignal exit) {
         return;
       } catch (RuntimeException e) {
+        if (!recorded) {
+          CommandHistory.recordUser(context, line, false);
+        }
         if (isExitSignal(e)) {
           return;
         }
@@ -111,15 +123,26 @@ public final class Repl {
         if (command.isEmpty()) {
           context.error("Unknown command: " + input.name);
         } else {
+          boolean recorded = false;
+          boolean success = false;
           context.resetFailure();
           try {
             CommandResult result2 = command.get().execute(context);
+            success = result2 == null || !result2.isFailure();
+            if (context.failed()) {
+              success = false;
+            }
+            CommandHistory.recordUser(context, combined, success);
+            recorded = true;
             if (result2 != null && result2.isFailure()) {
               context.clearContinuation();
             }
           } catch (ExitSignal exit) {
             throw exit;
           } catch (RuntimeException e) {
+            if (!recorded) {
+              CommandHistory.recordUser(context, combined, false);
+            }
             if (isExitSignal(e)) {
               throw new ExitSignal();
             }
